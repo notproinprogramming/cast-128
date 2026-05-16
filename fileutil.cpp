@@ -1,4 +1,6 @@
 #include "fileutil.hpp"
+#include <fstream>
+
 
 std::vector<std::vector<uint8_t>> parseKey128(const std::string& hex) {
     if (hex.size() != 32) {
@@ -48,4 +50,22 @@ std::string bytesToHex(const std::string& bytes) {
         result.push_back(table[c & 0xF]);
     }
     return result;
+}
+
+
+std::string readFile(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary); 
+    if (!file) {
+        throw std::runtime_error("Cannot open file: " + filename);
+    }
+    return std::string(std::istreambuf_iterator<char>(file),
+                       std::istreambuf_iterator<char>());
+}
+
+void writeFile(const std::string& filename, const std::string& data) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Cannot open file: " + filename);
+    }
+    file.write(data.data(), data.size());
 }
