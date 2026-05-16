@@ -29,3 +29,23 @@ std::vector<std::vector<uint8_t>> parseKey128(const std::string& hex) {
 
     return key;
 }
+
+
+std::string hexToBytes(const std::string& hex) {
+  std::string bytes;
+    for (size_t i = 0; i < hex.size(); i += 2) {
+        uint8_t byte = static_cast<uint8_t>(stoi(hex.substr(i, 2), nullptr, 16));
+        bytes.push_back(static_cast<char>(byte));
+    }
+    return bytes;
+}
+
+std::string bytesToHex(const std::string& bytes) {
+    const char* table = "0123456789ABCDEF";
+    std::string result;
+    for (unsigned char c : bytes) {
+        result.push_back(table[c >> 4]);  
+        result.push_back(table[c & 0xF]);
+    }
+    return result;
+}

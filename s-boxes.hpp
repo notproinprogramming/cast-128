@@ -1,4 +1,3 @@
-
 #include <cstdint>
 
 extern uint32_t S1[256];

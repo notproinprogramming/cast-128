@@ -8,12 +8,12 @@ int main() {
 string keyHex = "0123456712345678234567893456789a";
 auto key = parseKey128(keyHex);
 
-string P = "0123456789ABCDEF";
+string P = hexToBytes("0123456789abcdef");
 string C;
 EncryptData(key, P, C);
 string expectedC = "238B4FE5847E44B2";
 
 
 
-cout << hex << C << endl;
+cout << bytesToHex(C) << endl;   
 }

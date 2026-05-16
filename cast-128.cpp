@@ -1,4 +1,5 @@
 #include "s-boxes.hpp"
+#include <iostream>
 #include "cast-128.hpp"
 
 uint32_t circ_shift_left(uint32_t a, uint32_t b) {
@@ -18,7 +19,7 @@ uint32_t to_int(uint8_t x0, uint8_t x1, uint8_t x2, uint8_t x3){
   uint32_t res = (x0<<24) + (x1<<16) + (x2<<8) + x3;
 return res;}
 
-  uint32_t vec_to_int(std::vector<uint8_t> x){
+uint32_t vec_to_int(std::vector<uint8_t> x){
   uint32_t res = (x[0]<<24) + (x[1]<<16) + (x[2]<<8) + x[3];
 return res;}
 
@@ -64,8 +65,30 @@ uint64_t EncryptBlock(uint64_t P,std::vector<uint32_t> Km, std::vector<uint32_t>
         L_prev = L_next;
         R_prev = R_next;
     }
-    uint64_t C = (((uint64_t) R_next)<<32) ^ L_next;
+    uint64_t C = (((uint64_t) R_next)<<32) | L_next;
     return C;
+}
+
+uint64_t DecryptBlock(uint64_t C, std::vector<uint32_t> Km, std::vector<uint32_t> Kr) {
+    uint32_t L_prev = (C >> 32) & 0xFFFFFFFF;
+    uint32_t R_prev = C & 0xFFFFFFFF;
+    uint32_t L_next, R_next;
+
+    for (int i = 16; i >= 1; i--) {   
+        L_next = R_prev;
+        if (i % 3 == 1) {
+            R_next = L_prev ^ f1(Km[i], R_prev, Kr[i]);
+        } else if (i % 3 == 2) {
+            R_next = L_prev ^ f2(Km[i], R_prev, Kr[i]);
+        } else {
+            R_next = L_prev ^ f3(Km[i], R_prev, Kr[i]);
+        }
+        L_prev = L_next;
+        R_prev = R_next;
+    }
+
+    uint64_t P = (((uint64_t)R_next) << 32) | L_next;
+    return P;
 }
 
 std::vector<std::vector<uint8_t>> key(4); // вектор векторів з байт по 4 штуки кожен
@@ -216,6 +239,29 @@ void EncryptData(std::vector<std::vector<uint8_t>> key,
         uint64_t encrypted = EncryptBlock(block, Km, Kr);
 
         appendBlock64(encrypted, C);
+    }
+}
+
+void DecryptData(std::vector<std::vector<uint8_t>> key,
+                 std::string C,
+                 std::string& P)
+{
+  if (C.size()%8 !=0){
+   throw std::invalid_argument("Ciphertext length must be a multiple of 8 bytes");
+  }
+    std::vector<uint32_t> Km(17), Kr(17);
+    std::vector<std::vector<uint8_t>> z(4);
+
+    GenerateRoundKeys(key, z, Km, Kr);
+
+    P.clear();
+
+    for (size_t i = 0; i < C.size(); i += 8) {
+        uint64_t block = getBlock64(C, i);
+
+        uint64_t decrypted = DecryptBlock(block, Km, Kr);
+
+        appendBlock64(decrypted, P);
     }
 }
 
